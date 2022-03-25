@@ -1,0 +1,12 @@
+cradle:
+  cabal:
+    - path: "app/Main.hs"
+      component: "Work-from-start:exe:Work-from-start"
+    - path: "app/Model.hs"
+      component: "Work-from-start:exe:Work-from-start"
+    - path: "app/View.hs"
+      component: "Work-from-start:exe:Work-from-start"
+    - path: "app/Controller.hs"
+      component: "Work-from-start:exe:Work-from-start"
+    - path: "app/ExtraFunctions.hs"
+      component: "Work-from-start:exe:Work-from-start"
