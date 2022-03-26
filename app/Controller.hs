@@ -3,9 +3,12 @@
 module Controller where
 
 import Model as M
+import ExtraFunctions
+import Consts
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game as Game
-import ExtraFunctions
+import qualified Data.Map as Map
+import Data.Maybe (fromMaybe)
 
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
@@ -21,31 +24,25 @@ input = return *. handleEvent
 
 handleEvent :: Event -> GameState -> GameState
 handleEvent (EventResize newSize) = \gstate -> gstate{screenSize = newSize}
-handleEvent (EventKey key Game.Down _ _) = inputKeyDown key
-handleEvent (EventKey key Game.Up _ _) = inputKeyUp key
+handleEvent (EventKey key state _ _) = handleInput
+  where 
+    handleInput :: GameState -> GameState
+    handleInput gstate = fromMaybe gstate $ fnLookup gstate
+    fnLookup :: GameState -> Maybe GameState
+    fnLookup gs = Map.lookup (state,key) keyFunctions >>= 
+      \f -> return $ f gs
 handleEvent _ = id 
 
-inputKeyUp :: Key -> GameState -> GameState
-inputKeyUp (Char a) = moveKeyUp a
-inputKeyUp _ = id
-
-moveKeyUp :: Char -> GameState -> GameState
-moveKeyUp 'w' = updateMove (updateDir M.Down)
-moveKeyUp 'a' = updateMove (updateDir M.Left)
-moveKeyUp 's' = updateMove (updateDir M.Up)
-moveKeyUp 'd' = updateMove (updateDir M.Right)
-moveKeyUp _   = id
-
-inputKeyDown :: Key -> GameState -> GameState
-inputKeyDown (Char a) = moveKeyDown a
-inputKeyDown _ = id
-
-moveKeyDown :: Char -> GameState -> GameState
-moveKeyDown 'w' = updateMove (toDir M.Down)
-moveKeyDown 'a' = updateMove (toDir M.Left)
-moveKeyDown 's' = updateMove (toDir M.Up)
-moveKeyDown 'd' = updateMove (toDir M.Right)
-moveKeyDown _   = id
+keyFunctions :: Map.Map (KeyState, Key) (GameState  -> GameState)
+keyFunctions = Map.fromList [
+  ((Game.Up, moveUp), updateMove (updateDir M.Up)),
+  ((Game.Down, moveUp), updateMove (toDir M.Up)),
+  ((Game.Up, moveLeft), updateMove (updateDir M.Left)),
+  ((Game.Down, moveLeft), updateMove (toDir M.Left)),
+  ((Game.Up, moveRight), updateMove (updateDir M.Right)),
+  ((Game.Down, moveRight), updateMove (toDir M.Right)),
+  ((Game.Up, moveDown), updateMove (updateDir M.Down)),
+  ((Game.Down, moveDown), updateMove (toDir M.Down))]
 
 updateMove :: (Direction -> Direction)-> GameState -> GameState
 updateMove mov gstate = gstate{gsplayer = player{movement = newMove}}
