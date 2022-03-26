@@ -20,29 +20,37 @@ input :: Event -> GameState -> IO GameState
 input = return *. handleEvent
 
 handleEvent :: Event -> GameState -> GameState
-handleEvent (EventResize newSize) gstate = gstate{screenSize = newSize}
-handleEvent (EventKey key Game.Down _ _) gstate = inputKeyDown key gstate
-handleEvent (EventKey key Game.Up _ _) gstate = inputKeyUp key gstate
-handleEvent _ gState = gState --Otherwise keep the same
+handleEvent (EventResize newSize) = \gstate -> gstate{screenSize = newSize}
+handleEvent (EventKey key Game.Down _ _) = inputKeyDown key
+handleEvent (EventKey key Game.Up _ _) = inputKeyUp key
+handleEvent _ = id 
 
 inputKeyUp :: Key -> GameState -> GameState
-inputKeyUp (Char a) _ = undefined
-inputKeyUp _ gState = gState -- Otherwise keep the same
+inputKeyUp (Char a) = moveKeyUp a
+inputKeyUp _ = id
+
+moveKeyUp :: Char -> GameState -> GameState
+moveKeyUp 'w' = updateMove (updateDir M.Down)
+moveKeyUp 'a' = updateMove (updateDir M.Left)
+moveKeyUp 's' = updateMove (updateDir M.Up)
+moveKeyUp 'd' = updateMove (updateDir M.Right)
+moveKeyUp _   = id
 
 inputKeyDown :: Key -> GameState -> GameState
-inputKeyDown (Char a) gstate = moveKeyDown a gstate
-inputKeyDown (SpecialKey KeySpace) gstate = gstate
-inputKeyDown _ gState = gState -- Otherwise keep the same
+inputKeyDown (Char a) = moveKeyDown a
+inputKeyDown _ = id
 
 moveKeyDown :: Char -> GameState -> GameState
-moveKeyDown 'w' gstate = move $ moveV M.Down
-moveKeyDown 'a' gstate = move $ moveH M.Left
-moveKeyDown 's' gstate = move $ moveV M.Up
-moveKeyDown 'd' gstate = move $ moveH M.Right
-moveKeyDown _   gstate = gstate
+moveKeyDown 'w' = updateMove (toDir M.Down)
+moveKeyDown 'a' = updateMove (toDir M.Left)
+moveKeyDown 's' = updateMove (toDir M.Up)
+moveKeyDown 'd' = updateMove (toDir M.Right)
+moveKeyDown _   = id
+
+updateMove :: (Direction -> Direction)-> GameState -> GameState
+updateMove mov gstate = gstate{gsplayer = player{movement = newMove}}
   where
     player :: Player
-    player = player gstate
-    moveH x = (,) x (snd (movement player))
-    moveV x = (,) (fst (movement player)) x
-    move newMove = gstate{player = player{movement = newMove}}
+    player = gsplayer gstate
+    newMove :: Direction
+    newMove = mov (movement player)

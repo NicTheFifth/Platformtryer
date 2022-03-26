@@ -7,8 +7,8 @@ data GameState = Menu {
                | ActiveGame {
                     screenSize :: (Int, Int),
                     elapsedTime :: Float,
-                    player :: Player,
-                    platforms :: [Platform]
+                    gsplayer :: Player,
+                    gsplatforms :: [Platform]
                 }
 
 data Player = Player {
@@ -23,13 +23,29 @@ data Platform = Platform {
 type Direction = (HDirection, VDirection)
 
 data HDirection = Left | HNone | Right
+  deriving (Eq)
 data VDirection = Up   | VNone | Down
+  deriving (Eq)
+
+class Directional a  where
+  toDir :: a -> Direction -> Direction
+  updateDir :: a -> Direction -> Direction
 
 class Picturable a where
-    toPic :: a -> Picture 
+  toPic :: a -> Picture 
 
 class Positional a where
-    pos :: a -> (Int,Int)
+  pos :: a -> (Int,Int)
+
+instance Directional HDirection where
+  toDir x dir = (x,snd dir)
+  updateDir x dir@(x1,_) | x == x1 = (HNone,snd dir)
+                         | otherwise = dir
+
+instance Directional VDirection where
+  toDir y dir = (fst dir,y)
+  updateDir y dir@(_,y1) | y == y1 = (fst dir,VNone)
+                         | otherwise = dir
 
 instance Positional Player where
     pos = pPos
